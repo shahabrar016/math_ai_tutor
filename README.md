@@ -17,8 +17,7 @@ This project is a command-line AI tutor that handles math operations like solvin
 Requires Python 3.6+. Install dependencies:  
 `pip install sympy matplotlib numpy`  
 
-1. Clone the repository: `git clone https://github.com/[Your GitHub Username]/edtech-math-ai-tutor-enhanced.git`  
-2. Navigate: `cd edtech-math-ai-tutor-enhanced`  
+ 
 
 ## Usage
 Run: `python math_tutor_enhanced.py`  
