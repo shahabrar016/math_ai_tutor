@@ -75,34 +75,69 @@ def get_math_response(query):
     query_lower = query.lower()
 
     if "solve" in query_lower:
-        expr = query.split("solve")[-1].strip()
-        result, exp = solve_equation(expr)
-        if result is not None:
-            return f"Solutions: {result}. Explanation: {exp} (LaTeX: {latex(result)})"
+        expr_part = query.split("solve")[-1].strip()
+        try:
+            expr = sympify(expr_part.split("=")[0].strip())
+            solutions = solve(expr, x)
+            exp = f"Simplify: {simplify(expr)}. Solve: {solutions}. Steps: Set to zero, factor if quadratic."
+            return f"Solutions: {solutions}. Explanation: {exp} (LaTeX: {latex(solutions)})"
+        except (SympyException, IndexError, ValueError) as e:
+            return f"Error: Could not solve {expr_part}. Please use a valid equation like 'x**2 - 4 = 0'. Details: {str(e)}"
     elif "differentiate" in query_lower or "derivative" in query_lower:
-        expr = query.split("differentiate")[-1].strip() if "differentiate" in query_lower else query.split("of")[
-            -1].strip()
-        result, exp = differentiate(expr)
-        if result is not None:
-            plot = plot_function(expr, "Original Function") + " & " + plot_function(result, "Derivative")
-            return f"Result: {result}. Explanation: {exp} (LaTeX: {latex(result)}). Visuals: {plot}"
+        expr = (query.split("differentiate")[-1].strip() if "differentiate" in query_lower
+                else query.split("of")[-1].strip() if "derivative" in query_lower else "")
+        if not expr:
+            return "Error: Please provide an expression to differentiate, e.g., 'differentiate x**3'."
+        try:
+            result, exp = differentiate(expr)
+            if result is not None:
+                plot = (plot_function(expr, "Original Function") + " & " + plot_function(result, "Derivative")
+                        if "plot" in query_lower else "")
+                return (f"Result: {result}. Explanation: {exp} (LaTeX: {latex(result)}). Visuals: {plot}"
+                        if plot else f"Result: {result}. Explanation: {exp} (LaTeX: {latex(result)})")
+            else:
+                return exp
+        except (SympyException, ValueError) as e:
+            return f"Error: Could not differentiate {expr}. Please use a valid expression. Details: {str(e)}"
     elif "integrate" in query_lower or "integral" in query_lower:
-        expr = query.split("integrate")[-1].strip() if "integrate" in query_lower else query.split("of")[-1].strip()
-        result, exp = integrate_expr(expr)
-        if result is not None:
-            plot = plot_function(expr, "Original Function") + " & " + plot_function(result, "Integral")
-            return f"Result: {result} + C. Explanation: {exp} (LaTeX: {latex(result)}). Visuals: {plot}"
+        expr = (query.split("integrate")[-1].strip() if "integrate" in query_lower
+                else query.split("of")[-1].strip() if "integral" in query_lower else "")
+        if not expr:
+            return "Error: Please provide an expression to integrate, e.g., 'integrate x**2'."
+        try:
+            result, exp = integrate_expr(expr)
+            if result is not None:
+                plot = (plot_function(expr, "Original Function") + " & " + plot_function(result, "Integral")
+                        if "plot" in query_lower else "")
+                return (f"Result: {result} + C. Explanation: {exp} (LaTeX: {latex(result)}). Visuals: {plot}"
+                        if plot else f"Result: {result} + C. Explanation: {exp} (LaTeX: {latex(result)})")
+            else:
+                return exp
+        except (SympyException, ValueError) as e:
+            return f"Error: Could not integrate {expr}. Please use a valid expression. Details: {str(e)}"
     elif "limit" in query_lower:
-        parts = query_lower.split("limit of")[-1].strip().split("at")
-        expr, point = parts[0].strip(), parts[1].strip() if len(parts) > 1 else "0"
-        result, exp = compute_limit(expr, point)
-        if result is not None:
-            return f"Result: {result}. Explanation: {exp}"
+        try:
+            parts = query_lower.split("limit of")[-1].strip().split("at")
+            if len(parts) < 2:
+                return "Error: Please specify a limit point, e.g., 'limit sin(x)/x at 0'."
+            expr, point = parts[0].strip(), parts[1].strip()
+            result, exp = compute_limit(expr, point)
+            if result is not None:
+                return f"Result: {result}. Explanation: {exp}"
+            else:
+                return exp
+        except (SympyException, IndexError, ValueError) as e:
+            return f"Error: Could not compute limit for {query}. Please use format 'limit <expr> at <point>'. Details: {str(e)}"
     elif "simplify" in query_lower:
         expr = query.split("simplify")[-1].strip()
-        result, exp = simplify_expr(expr)
-        if result is not None:
-            return f"Result: {result}. Explanation: {exp} (LaTeX: {latex(result)})"
+        try:
+            result, exp = simplify_expr(expr)
+            if result is not None:
+                return f"Result: {result}. Explanation: {exp} (LaTeX: {latex(result)})"
+            else:
+                return exp
+        except (SympyException, ValueError) as e:
+            return f"Error: Could not simplify {expr}. Please use a valid expression. Details: {str(e)}"
     else:
         return "I handle solve, differentiate, integrate, limit, simplify. E.g., 'integrate x**2', 'limit sin(x)/x at 0'."
 
